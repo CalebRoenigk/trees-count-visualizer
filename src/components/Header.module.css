@@ -6,15 +6,17 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 2.75rem;
+  /* Fluid between phone (~28px) and tablet-and-up (44px, the desktop
+     size) — flat below ~467px viewport width, flat above ~733px. */
+  font-size: clamp(1.75rem, 6vw, 2.75rem);
   color: var(--color-ink);
   letter-spacing: -0.01em;
 }
 
 .subtitle {
   margin: 0.4em 0 0;
-  font-size: 0.82rem;
+  font-size: clamp(0.72rem, 2.6vw, 0.82rem);
   line-height: 1.5;
   color: var(--color-ink-soft);
-  max-width: 34ch;
+  max-width: min(34ch, 78vw);
 }

@@ -93,7 +93,38 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
   const prevCursorRef = useRef(0);
   const [poppedAt, setPoppedAt] = useState<Map<string, number>>(new Map());
 
-  const visibleTrees = useMemo(() => timedTrees.filter((t) => t.x <= cursorX), [timedTrees, cursorX]);
+  // timedTrees is sorted by .x (a monotonic transform of createdAt), so the
+  // visible set is always its leading prefix — found in O(log n) instead of
+  // an O(n) scan every frame, and — more importantly — kept at the *same*
+  // array reference across frames where the prefix length hasn't changed.
+  // Without that, this recomputed on every rAF tick during playback (every
+  // frame, not just when a tree actually popped in), which cascaded into
+  // MapView rebuilding and re-submitting its entire GeoJSON source on every
+  // frame regardless of whether anything changed — fine at a few hundred
+  // trees, but a real jank source at thousands.
+  const visibleTreesCacheRef = useRef<{ timedTrees: TimedTree[]; count: number; result: TimedTree[] }>({
+    timedTrees: [],
+    count: 0,
+    result: [],
+  });
+  const visibleTrees = useMemo(() => {
+    let lo = 0;
+    let hi = timedTrees.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (timedTrees[mid].x <= cursorX) lo = mid + 1;
+      else hi = mid;
+    }
+    const count = lo;
+
+    const cache = visibleTreesCacheRef.current;
+    if (cache.timedTrees === timedTrees && cache.count === count) {
+      return cache.result;
+    }
+    const result = timedTrees.slice(0, count);
+    visibleTreesCacheRef.current = { timedTrees, count, result };
+    return result;
+  }, [timedTrees, cursorX]);
 
   useEffect(() => {
     const movedForward = cursorX >= prevCursorRef.current;
