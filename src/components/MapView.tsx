@@ -24,6 +24,17 @@ const PROSPECT_PARK_CENTER: [number, number] = [-73.972, 40.6615];
 const POP_TRANSITION_MS = 450;
 const CAMERA_PADDING = { top: 190, bottom: 260, left: 90, right: 300 };
 
+// Keeps panning/zooming from wandering past NYC — a loose box around the
+// five boroughs (Staten Island's western/southern tip, the Bronx's
+// northern edge, Queens' eastern border), not a tight administrative
+// boundary. maxBounds fits this box to whichever viewport dimension binds
+// first, so a wide browser window may still reveal a bit past the edge —
+// expected, not worth chasing per-aspect-ratio bounds for.
+const NYC_MAX_BOUNDS: maplibregl.LngLatBoundsLike = [
+  [-74.28, 40.47],
+  [-73.68, 40.93],
+];
+
 interface MapViewProps {
   trees: Tree[];
   visibleIds: Set<string>;
@@ -116,6 +127,7 @@ export function MapView({
       center: PROSPECT_PARK_CENTER,
       zoom: 15.2,
       attributionControl: false,
+      maxBounds: NYC_MAX_BOUNDS,
     });
     mapRef.current = map;
 
@@ -130,7 +142,24 @@ export function MapView({
         type: 'circle',
         source: 'trees',
         paint: {
-          'circle-radius': ['get', 'radius'],
+          // Scaled by zoom (not just the tree's own size) so markers
+          // shrink at a borough- or city-wide view instead of dominating
+          // the screen — a hand-tuned curve, not a literal ground-scale.
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10,
+            ['*', ['get', 'radius'], 0.15],
+            12,
+            ['*', ['get', 'radius'], 0.35],
+            14,
+            ['*', ['get', 'radius'], 0.65],
+            16,
+            ['*', ['get', 'radius'], 1],
+            18,
+            ['*', ['get', 'radius'], 1.15],
+          ],
           'circle-radius-transition': { duration: POP_TRANSITION_MS },
           'circle-color': ['get', 'activeColor'],
           'circle-opacity': ['get', 'fillOpacity'],
