@@ -61,6 +61,9 @@ function App() {
         onClickTree={handleClickTree}
       />
 
+      <div className={styles.vignette} />
+      <div className={styles.bottomScrim} />
+
       <div className={styles.overlay}>
         <div className={styles.topRow}>
           <Header />
