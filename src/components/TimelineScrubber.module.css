@@ -1,0 +1,64 @@
+.wrapper {
+  pointer-events: auto;
+  width: 100%;
+  padding: 10px 0;
+  touch-action: none;
+}
+
+.track {
+  position: relative;
+  height: 22px;
+  cursor: pointer;
+}
+
+.baseline {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  transform: translateY(-50%);
+  background: var(--color-cream-deep);
+  border-radius: 999px;
+}
+
+.tick,
+.tickPassed {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.tick {
+  background: rgba(90, 82, 66, 0.35);
+}
+
+.tickPassed {
+  background: var(--color-ink-soft);
+}
+
+.activeBracket {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: 1.5px solid var(--color-ink);
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+.playhead {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--color-ink);
+  border: 2px solid var(--color-cream);
+  box-shadow: 0 1px 4px var(--color-shadow);
+  pointer-events: none;
+}

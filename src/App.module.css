@@ -1,0 +1,72 @@
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  padding: 2.75rem 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.bottomStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+}
+
+.locationBlock {
+  pointer-events: none;
+}
+
+.locationName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--color-ink);
+}
+
+.locationDate {
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+  margin-top: 0.2em;
+}
+
+.sideStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.errorBanner {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #c1544a;
+  color: #fff;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}

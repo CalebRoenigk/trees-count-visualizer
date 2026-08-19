@@ -1,0 +1,20 @@
+.header {
+  pointer-events: none;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.75rem;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 0.4em 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+  max-width: 34ch;
+}

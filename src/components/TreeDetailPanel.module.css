@@ -1,0 +1,49 @@
+.panel {
+  pointer-events: auto;
+  text-align: right;
+  color: var(--color-ink-soft);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  max-width: 220px;
+}
+
+.title {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--color-ink);
+  font-size: 0.8rem;
+}
+
+.species {
+  font-style: italic;
+  margin-bottom: 0.35em;
+}
+
+.rows {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4em;
+}
+
+.row dt {
+  color: var(--color-ink-faint);
+}
+
+.row dt::after {
+  content: ' -';
+}
+
+.row dd {
+  margin: 0;
+}
+
+.coords {
+  margin-top: 0.35em;
+  color: var(--color-ink-faint);
+  font-variant-numeric: tabular-nums;
+}

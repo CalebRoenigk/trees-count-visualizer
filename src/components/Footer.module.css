@@ -1,0 +1,12 @@
+.footer {
+  pointer-events: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  font-size: 0.68rem;
+  color: var(--color-ink-faint);
+}
+
+.footer a {
+  color: var(--color-ink-soft);
+}

@@ -1,0 +1,31 @@
+.toggle {
+  display: inline-flex;
+  pointer-events: auto;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: 0 2px 10px var(--color-shadow);
+  backdrop-filter: blur(6px);
+}
+
+.tab,
+.activeTab {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.4em 0.9em;
+  font-size: 0.72rem;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--color-ink);
+}
+
+.activeTab {
+  background: var(--color-ink);
+  color: var(--color-cream);
+}

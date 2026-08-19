@@ -1,122 +1,114 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useMemo, useState } from 'react';
+import { ColorModeToggle } from './components/ColorModeToggle';
+import { Footer } from './components/Footer';
+import { Header } from './components/Header';
+import { Legend } from './components/Legend';
+import { MapView, type ColorMode } from './components/MapView';
+import { PlaybackControls } from './components/PlaybackControls';
+import { TimelineScrubber } from './components/TimelineScrubber';
+import { TreeDetailPanel } from './components/TreeDetailPanel';
+import { assignSpeciesColors } from './data/colors';
+import { loadTrees } from './data/loadTrees';
+import type { Tree } from './data/types';
+import { useTimelineEngine } from './hooks/useTimelineEngine';
+import styles from './App.module.css';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function formatDate(ms: number): string {
+  const d = new Date(ms);
+  const day = d.getDate();
+  const suffix = day % 10 === 1 && day !== 11 ? 'st' : day % 10 === 2 && day !== 12 ? 'nd' : day % 10 === 3 && day !== 13 ? 'rd' : 'th';
+  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  return `${month} ${day}${suffix} ${d.getFullYear()}`;
 }
 
-export default App
+function App() {
+  const [trees, setTrees] = useState<Tree[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [colorMode, setColorMode] = useState<ColorMode>('health');
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadTrees()
+      .then(setTrees)
+      .catch((err) => setLoadError(err instanceof Error ? err.message : String(err)));
+  }, []);
+
+  const engine = useTimelineEngine(trees ?? []);
+  const speciesColors = useMemo(() => assignSpeciesColors(trees ?? []), [trees]);
+
+  const selectedId = pinnedId ?? hoveredId;
+  const selectedTree = useMemo(
+    () => (trees ?? []).find((t) => t.id === selectedId) ?? null,
+    [trees, selectedId],
+  );
+
+  const handleClickTree = (id: string | null) => {
+    setPinnedId((prev) => (id === null ? null : prev === id ? null : id));
+  };
+
+  return (
+    <div className={styles.app}>
+      <MapView
+        visibleTrees={engine.visibleTrees}
+        colorMode={colorMode}
+        speciesColors={speciesColors}
+        newlyPoppedIds={engine.newlyPoppedIds}
+        cursorPosition={engine.cursorPosition}
+        hoveredId={hoveredId}
+        pinnedId={pinnedId}
+        onHoverTree={setHoveredId}
+        onClickTree={handleClickTree}
+      />
+
+      <div className={styles.overlay}>
+        <div className={styles.topRow}>
+          <Header />
+          <TreeDetailPanel tree={selectedTree} />
+        </div>
+
+        <div className={styles.bottomStack}>
+          <div className={styles.infoRow}>
+            <div className={styles.locationBlock}>
+              <div className={styles.locationName}>{engine.currentLocationLabel}</div>
+              <div className={styles.locationDate}>
+                {trees && trees.length > 0 ? formatDate(engine.cursorMs) : ''}
+              </div>
+            </div>
+            <div className={styles.sideStack}>
+              <ColorModeToggle mode={colorMode} onChange={setColorMode} />
+              <Legend mode={colorMode} speciesColors={speciesColors} />
+            </div>
+          </div>
+
+          <TimelineScrubber
+            axis={engine.axis}
+            groups={engine.groups}
+            timedTrees={engine.timedTrees}
+            activeGroupIndex={engine.activeGroupIndex}
+            cursorX={engine.cursorX}
+            onSeek={engine.seekTo}
+          />
+
+          <PlaybackControls
+            isPlaying={engine.isPlaying}
+            onTogglePlay={engine.togglePlay}
+            onPrevGroup={engine.goToPrevGroup}
+            onNextGroup={engine.goToNextGroup}
+            sliderPos={engine.sliderPos}
+            onSliderPosChange={engine.setSliderPos}
+            speed={engine.speed}
+          />
+
+          <Footer />
+        </div>
+      </div>
+
+      {loadError && (
+        <div className={styles.errorBanner}>Failed to load tree data: {loadError}</div>
+      )}
+    </div>
+  );
+}
+
+export default App;
