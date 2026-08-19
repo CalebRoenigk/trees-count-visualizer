@@ -1,13 +1,14 @@
-import { HEALTH_COLORS, HEALTH_ORDER, OTHER_SPECIES_COLOR, type SpeciesColorMap } from '@/data/colors';
+import { HEALTH_COLORS, HEALTH_ORDER, OTHER_SPECIES_COLOR, type SpeciesEntry } from '@/data/colors';
 import type { ColorMode } from './MapView';
 import styles from './Legend.module.css';
 
 interface LegendProps {
   mode: ColorMode;
-  speciesColors: SpeciesColorMap;
+  speciesEntries: SpeciesEntry[];
+  hasOtherSpecies: boolean;
 }
 
-export function Legend({ mode, speciesColors }: LegendProps) {
+export function Legend({ mode, speciesEntries, hasOtherSpecies }: LegendProps) {
   if (mode === 'health') {
     const gradient = `linear-gradient(to right, ${HEALTH_ORDER.map((h) => HEALTH_COLORS[h]).join(', ')})`;
     return (
@@ -27,13 +28,13 @@ export function Legend({ mode, speciesColors }: LegendProps) {
     <div className={styles.card}>
       <div className={styles.title}>Tree Type</div>
       <ul className={styles.speciesList}>
-        {speciesColors.topSpecies.map(({ species, color }) => (
+        {speciesEntries.map(({ species, color }) => (
           <li key={species}>
             <span className={styles.swatch} style={{ background: color }} />
             {species}
           </li>
         ))}
-        {speciesColors.hasOther && (
+        {hasOtherSpecies && (
           <li>
             <span className={styles.swatch} style={{ background: OTHER_SPECIES_COLOR }} />
             Other

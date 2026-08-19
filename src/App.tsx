@@ -7,7 +7,7 @@ import { MapView, type ColorMode } from './components/MapView';
 import { PlaybackControls } from './components/PlaybackControls';
 import { TimelineScrubber } from './components/TimelineScrubber';
 import { TreeDetailPanel } from './components/TreeDetailPanel';
-import { assignSpeciesColors } from './data/colors';
+import { assignSpeciesColors, speciesEntriesFor } from './data/colors';
 import { loadTrees } from './data/loadTrees';
 import type { Tree } from './data/types';
 import { useTimelineEngine } from './hooks/useTimelineEngine';
@@ -27,6 +27,7 @@ function App() {
   const [colorMode, setColorMode] = useState<ColorMode>('health');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const [viewportTreeIds, setViewportTreeIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadTrees()
@@ -36,6 +37,21 @@ function App() {
 
   const engine = useTimelineEngine(trees ?? []);
   const speciesColors = useMemo(() => assignSpeciesColors(trees ?? []), [trees]);
+  const visibleIds = useMemo(() => new Set(engine.visibleTrees.map((t) => t.id)), [engine.visibleTrees]);
+  const activeGroupBounds = engine.groups[engine.activeGroupIndex]?.bounds ?? null;
+
+  // Reported by MapView from the map's actual rendered bounds (not just
+  // the active group's bounds — camera padding and nearby-but-different
+  // -session clusters can put more on screen than that), so the "Tree
+  // Type" legend reflects exactly what's currently visible on the map.
+  const treesInView = useMemo(
+    () => (trees ?? []).filter((t) => viewportTreeIds.has(t.id)),
+    [trees, viewportTreeIds],
+  );
+  const speciesInView = useMemo(
+    () => speciesEntriesFor(treesInView, speciesColors),
+    [treesInView, speciesColors],
+  );
 
   const selectedId = pinnedId ?? hoveredId;
   const selectedTree = useMemo(
@@ -50,15 +66,17 @@ function App() {
   return (
     <div className={styles.app}>
       <MapView
-        visibleTrees={engine.visibleTrees}
+        trees={engine.timedTrees}
+        visibleIds={visibleIds}
         colorMode={colorMode}
         speciesColors={speciesColors}
         newlyPoppedIds={engine.newlyPoppedIds}
-        cursorPosition={engine.cursorPosition}
+        activeGroupBounds={activeGroupBounds}
         hoveredId={hoveredId}
         pinnedId={pinnedId}
         onHoverTree={setHoveredId}
         onClickTree={handleClickTree}
+        onViewportTreesChange={setViewportTreeIds}
       />
 
       <div className={styles.vignette} />
@@ -80,7 +98,11 @@ function App() {
             </div>
             <div className={styles.sideStack}>
               <ColorModeToggle mode={colorMode} onChange={setColorMode} />
-              <Legend mode={colorMode} speciesColors={speciesColors} />
+              <Legend
+                mode={colorMode}
+                speciesEntries={speciesInView.entries}
+                hasOtherSpecies={speciesInView.hasOther}
+              />
             </div>
           </div>
 

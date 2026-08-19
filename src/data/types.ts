@@ -73,9 +73,17 @@ export interface Tree {
   raw: RawSurveyTree;
 }
 
+export interface GroupBounds {
+  minLon: number;
+  minLat: number;
+  maxLon: number;
+  maxLat: number;
+}
+
 export interface TreeGroup {
   id: string;
   startTime: number;
   endTime: number;
   treeIds: string[];
+  bounds: GroupBounds;
 }

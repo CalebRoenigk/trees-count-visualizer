@@ -2,7 +2,7 @@ import * as maplibregl from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 import { circumferenceToRadius, HEALTH_COLORS } from '@/data/colors';
 import type { SpeciesColorMap } from '@/data/colors';
-import type { Tree } from '@/data/types';
+import type { GroupBounds, Tree } from '@/data/types';
 import mapStyleRaw from '@/map/style.json';
 import styles from './MapView.module.css';
 
@@ -21,67 +21,91 @@ const mapStyle = mapStyleRaw as unknown as maplibregl.StyleSpecification;
 export type ColorMode = 'health' | 'type';
 
 const PROSPECT_PARK_CENTER: [number, number] = [-73.972, 40.6615];
+const POP_TRANSITION_MS = 450;
+const CAMERA_PADDING = { top: 190, bottom: 260, left: 90, right: 300 };
 
 interface MapViewProps {
-  visibleTrees: Tree[];
+  trees: Tree[];
+  visibleIds: Set<string>;
   colorMode: ColorMode;
   speciesColors: SpeciesColorMap;
   newlyPoppedIds: Set<string>;
-  cursorPosition: { lon: number; lat: number } | null;
+  activeGroupBounds: GroupBounds | null;
   hoveredId: string | null;
   pinnedId: string | null;
   onHoverTree: (id: string | null) => void;
   onClickTree: (id: string | null) => void;
+  onViewportTreesChange: (ids: Set<string>) => void;
 }
 
 function buildFeatureCollection(
   trees: Tree[],
+  visibleIds: Set<string>,
   colorMode: ColorMode,
   speciesColors: SpeciesColorMap,
   newlyPoppedIds: Set<string>,
 ): GeoJSON.FeatureCollection {
   return {
     type: 'FeatureCollection',
-    features: trees.map((t) => ({
-      type: 'Feature',
-      id: t.id,
-      geometry: { type: 'Point', coordinates: [t.lon, t.lat] },
-      properties: {
+    features: trees.map((t) => {
+      const visible = visibleIds.has(t.id);
+      return {
+        type: 'Feature',
         id: t.id,
-        species: t.species,
-        circumferenceIn: t.circumferenceIn,
-        radius: circumferenceToRadius(t.circumferenceIn),
-        healthColor: HEALTH_COLORS[t.health],
-        typeColor: speciesColors.colorFor(t.species),
-        activeColor: colorMode === 'health' ? HEALTH_COLORS[t.health] : speciesColors.colorFor(t.species),
-        isNew: newlyPoppedIds.has(t.id) ? 1 : 0,
-      },
-    })),
+        geometry: { type: 'Point', coordinates: [t.lon, t.lat] },
+        properties: {
+          id: t.id,
+          species: t.species,
+          circumferenceIn: t.circumferenceIn,
+          radius: visible ? circumferenceToRadius(t.circumferenceIn) : 0,
+          fillOpacity: visible ? 0.9 : 0,
+          strokeOpacity: visible ? 1 : 0,
+          healthColor: HEALTH_COLORS[t.health],
+          typeColor: speciesColors.colorFor(t.species),
+          activeColor: colorMode === 'health' ? HEALTH_COLORS[t.health] : speciesColors.colorFor(t.species),
+          isNew: newlyPoppedIds.has(t.id) ? 1 : 0,
+        },
+      };
+    }),
   };
 }
 
 export function MapView({
-  visibleTrees,
+  trees,
+  visibleIds,
   colorMode,
   speciesColors,
   newlyPoppedIds,
-  cursorPosition,
+  activeGroupBounds,
   hoveredId,
   pinnedId,
   onHoverTree,
   onClickTree,
+  onViewportTreesChange,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const rippleRef = useRef<maplibregl.Marker | null>(null);
   const loadedRef = useRef(false);
 
   const onHoverTreeRef = useRef(onHoverTree);
   const onClickTreeRef = useRef(onClickTree);
+  const onViewportTreesChangeRef = useRef(onViewportTreesChange);
+  const treesRef = useRef(trees);
+  const visibleIdsRef = useRef(visibleIds);
   useEffect(() => {
     onHoverTreeRef.current = onHoverTree;
     onClickTreeRef.current = onClickTree;
-  }, [onHoverTree, onClickTree]);
+    onViewportTreesChangeRef.current = onViewportTreesChange;
+    treesRef.current = trees;
+    visibleIdsRef.current = visibleIds;
+  }, [onHoverTree, onClickTree, onViewportTreesChange, trees, visibleIds]);
+
+  // Recomputes which currently-counted trees fall within the map's actual
+  // rendered viewport (not just the active group's bounds — camera padding
+  // and nearby-but-different-session clusters can put more on screen than
+  // that). Assigned once the map loads; called on camera settle and on
+  // every source update so newly-popped trees are reflected immediately.
+  const recomputeViewportRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -95,18 +119,6 @@ export function MapView({
     });
     mapRef.current = map;
 
-    // MapLibre owns `transform` on the marker's root element for
-    // positioning, so the pulse animation lives on a nested child instead
-    // of the root — otherwise the two `transform` writers fight and the
-    // marker renders stuck near the map origin.
-    const rippleEl = document.createElement('div');
-    rippleEl.className = styles.rippleAnchor;
-    const rippleInner = document.createElement('div');
-    rippleInner.className = styles.ripple;
-    rippleEl.appendChild(rippleInner);
-    const ripple = new maplibregl.Marker({ element: rippleEl });
-    rippleRef.current = ripple;
-
     map.on('load', () => {
       map.addSource('trees', {
         type: 'geojson',
@@ -119,10 +131,14 @@ export function MapView({
         source: 'trees',
         paint: {
           'circle-radius': ['get', 'radius'],
+          'circle-radius-transition': { duration: POP_TRANSITION_MS },
           'circle-color': ['get', 'activeColor'],
-          'circle-opacity': 0.9,
+          'circle-opacity': ['get', 'fillOpacity'],
+          'circle-opacity-transition': { duration: POP_TRANSITION_MS },
           'circle-stroke-width': 1.5,
-          'circle-stroke-color': 'rgb(243, 236, 220)',
+          'circle-stroke-color': 'rgb(250, 249, 245)',
+          'circle-stroke-opacity': ['get', 'strokeOpacity'],
+          'circle-stroke-opacity-transition': { duration: POP_TRANSITION_MS },
         },
       });
 
@@ -160,12 +176,23 @@ export function MapView({
         onClickTreeRef.current(id ?? null);
       });
 
+      const recomputeViewport = () => {
+        const bounds = map.getBounds();
+        const ids = new Set(
+          treesRef.current
+            .filter((t) => visibleIdsRef.current.has(t.id) && bounds.contains([t.lon, t.lat]))
+            .map((t) => t.id),
+        );
+        onViewportTreesChangeRef.current(ids);
+      };
+      recomputeViewportRef.current = recomputeViewport;
+      map.on('moveend', recomputeViewport);
+
       loadedRef.current = true;
     });
 
     return () => {
       loadedRef.current = false;
-      ripple.remove();
       map.remove();
       mapRef.current = null;
     };
@@ -178,25 +205,37 @@ export function MapView({
     const update = () => {
       const source = map.getSource('trees') as maplibregl.GeoJSONSource | undefined;
       if (!source) return;
-      source.setData(buildFeatureCollection(visibleTrees, colorMode, speciesColors, newlyPoppedIds));
+      source.setData(buildFeatureCollection(trees, visibleIds, colorMode, speciesColors, newlyPoppedIds));
+      recomputeViewportRef.current();
     };
 
     if (loadedRef.current) update();
     else map.once('load', update);
-  }, [visibleTrees, colorMode, speciesColors, newlyPoppedIds]);
+  }, [trees, visibleIds, colorMode, speciesColors, newlyPoppedIds]);
 
+  // Camera glides to frame whichever group is currently active, so the
+  // whole cluster of trees counted in that session is visible together.
   useEffect(() => {
     const map = mapRef.current;
-    const ripple = rippleRef.current;
-    if (!map || !ripple) return;
+    if (!map || !activeGroupBounds) return;
 
-    if (cursorPosition) {
-      ripple.setLngLat([cursorPosition.lon, cursorPosition.lat]);
-      if (!ripple.getElement().isConnected) ripple.addTo(map);
-    } else {
-      ripple.remove();
-    }
-  }, [cursorPosition]);
+    const fly = () =>
+      map.fitBounds(
+        [
+          [activeGroupBounds.minLon, activeGroupBounds.minLat],
+          [activeGroupBounds.maxLon, activeGroupBounds.maxLat],
+        ],
+        {
+          padding: CAMERA_PADDING,
+          maxZoom: 17,
+          duration: 1200,
+          essential: true,
+        },
+      );
+
+    if (loadedRef.current) fly();
+    else map.once('load', fly);
+  }, [activeGroupBounds]);
 
   const emphasizedId = pinnedId ?? hoveredId;
   useEffect(() => {

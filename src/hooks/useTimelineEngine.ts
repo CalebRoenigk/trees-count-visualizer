@@ -175,19 +175,6 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
     return visibleTrees[visibleTrees.length - 1].parkName;
   }, [visibleTrees, trees]);
 
-  const cursorPosition = useMemo<{ lon: number; lat: number } | null>(() => {
-    if (visibleTrees.length === 0 || visibleTrees.length >= timedTrees.length) return null;
-    const last = visibleTrees[visibleTrees.length - 1];
-    const next = timedTrees[visibleTrees.length];
-    if (!next) return null;
-    const span = next.x - last.x || 1;
-    const fraction = Math.min(1, Math.max(0, (cursorX - last.x) / span));
-    return {
-      lon: last.lon + (next.lon - last.lon) * fraction,
-      lat: last.lat + (next.lat - last.lat) * fraction,
-    };
-  }, [visibleTrees, timedTrees, cursorX]);
-
   return {
     groups,
     axis,
@@ -201,7 +188,6 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
     speed,
     activeGroupIndex,
     currentLocationLabel,
-    cursorPosition,
     play,
     pause,
     togglePlay,

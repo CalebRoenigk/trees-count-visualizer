@@ -21,12 +21,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 280px;
+  height: 400px;
   pointer-events: none;
   background: linear-gradient(
     to top,
     rgba(var(--color-cream-rgb), 0.92) 0%,
-    rgba(var(--color-cream-rgb), 0.6) 45%,
+    rgba(var(--color-cream-rgb), 1) 45%,
     transparent 100%
   );
 }

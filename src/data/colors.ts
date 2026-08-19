@@ -55,6 +55,35 @@ export function assignSpeciesColors(trees: Tree[]): SpeciesColorMap {
   };
 }
 
+export interface SpeciesEntry {
+  species: string;
+  color: string;
+  count: number;
+}
+
+/**
+ * Species breakdown for a specific subset of trees (e.g. only the ones
+ * currently on screen), reusing the stable global color assignment from
+ * `colorMap` so a species never changes color as the camera moves.
+ */
+export function speciesEntriesFor(trees: Tree[], colorMap: SpeciesColorMap): {
+  entries: SpeciesEntry[];
+  hasOther: boolean;
+} {
+  const counts = new Map<string, number>();
+  for (const tree of trees) {
+    counts.set(tree.species, (counts.get(tree.species) ?? 0) + 1);
+  }
+
+  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const top = ranked.slice(0, SPECIES_PALETTE.length);
+
+  return {
+    entries: top.map(([species, count]) => ({ species, count, color: colorMap.colorFor(species) })),
+    hasOther: ranked.length > top.length,
+  };
+}
+
 const MIN_CIRCUMFERENCE = 4;
 const MAX_CIRCUMFERENCE = 70;
 const MIN_RADIUS = 5;

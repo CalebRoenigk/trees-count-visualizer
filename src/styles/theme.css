@@ -6,13 +6,13 @@
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
 :root {
-  --color-cream: #f3ecdc;
-  --color-cream-rgb: 243, 236, 220;
-  --color-cream-deep: #e9dfc6;
+  --color-cream: #faf9f5;
+  --color-cream-rgb: 250, 249, 245;
+  --color-cream-deep: #eee8d8;
   --color-ink: #2c2820;
   --color-ink-soft: #565042;
   --color-ink-faint: #8a8071;
-  --color-panel-bg: rgba(243, 236, 220, 0.92);
+  --color-panel-bg: rgba(250, 249, 245, 0.92);
   --color-panel-border: rgba(44, 40, 32, 0.1);
   --color-shadow: rgba(44, 40, 32, 0.14);
 
