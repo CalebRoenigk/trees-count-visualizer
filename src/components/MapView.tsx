@@ -22,7 +22,11 @@ export type ColorMode = 'health' | 'type';
 
 const PROSPECT_PARK_CENTER: [number, number] = [-73.972, 40.6615];
 const POP_TRANSITION_MS = 450;
-const CAMERA_PADDING = { top: 190, bottom: 260, left: 90, right: 300 };
+const CAMERA_FLY_DURATION_MS = 1200;
+// Extra margin around a group's bounds so the camera sits a bit further
+// back than a tight fit — keeps trees from crowding the very edge of the
+// frame once the pop-in/emphasis rings are factored in.
+const CAMERA_PADDING = { top: 260, bottom: 340, left: 160, right: 400 };
 
 // Keeps panning/zooming from wandering past NYC — a loose box around the
 // five boroughs (Staten Island's western/southern tip, the Bronx's
@@ -47,6 +51,7 @@ interface MapViewProps {
   onHoverTree: (id: string | null) => void;
   onClickTree: (id: string | null) => void;
   onViewportTreesChange: (ids: Set<string>) => void;
+  onCameraTransitionChange: (transitioning: boolean) => void;
 }
 
 function buildFeatureCollection(
@@ -99,6 +104,7 @@ export function MapView({
   onHoverTree,
   onClickTree,
   onViewportTreesChange,
+  onCameraTransitionChange,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -107,15 +113,17 @@ export function MapView({
   const onHoverTreeRef = useRef(onHoverTree);
   const onClickTreeRef = useRef(onClickTree);
   const onViewportTreesChangeRef = useRef(onViewportTreesChange);
+  const onCameraTransitionChangeRef = useRef(onCameraTransitionChange);
   const treesRef = useRef(trees);
   const visibleIdsRef = useRef(visibleIds);
   useEffect(() => {
     onHoverTreeRef.current = onHoverTree;
     onClickTreeRef.current = onClickTree;
     onViewportTreesChangeRef.current = onViewportTreesChange;
+    onCameraTransitionChangeRef.current = onCameraTransitionChange;
     treesRef.current = trees;
     visibleIdsRef.current = visibleIds;
-  }, [onHoverTree, onClickTree, onViewportTreesChange, trees, visibleIds]);
+  }, [onHoverTree, onClickTree, onViewportTreesChange, onCameraTransitionChange, trees, visibleIds]);
 
   // Recomputes which currently-counted trees fall within the map's actual
   // rendered viewport (not just the active group's bounds — camera padding
@@ -254,7 +262,8 @@ export function MapView({
     const map = mapRef.current;
     if (!map || !activeGroupBounds) return;
 
-    const fly = () =>
+    const fly = () => {
+      onCameraTransitionChangeRef.current(true);
       map.fitBounds(
         [
           [activeGroupBounds.minLon, activeGroupBounds.minLat],
@@ -263,10 +272,15 @@ export function MapView({
         {
           padding: CAMERA_PADDING,
           maxZoom: 17,
-          duration: 1200,
+          duration: CAMERA_FLY_DURATION_MS,
           essential: true,
         },
       );
+      // A plain timeout (rather than a `moveend` listener) sidesteps any
+      // ambiguity from a fast-following group change interrupting this
+      // flight mid-animation and re-triggering its own moveend.
+      window.setTimeout(() => onCameraTransitionChangeRef.current(false), CAMERA_FLY_DURATION_MS);
+    };
 
     if (loadedRef.current) fly();
     else map.once('load', fly);

@@ -30,6 +30,11 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
   const [cursorX, setCursorX] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [sliderPos, setSliderPos] = useState(0.8);
+  // Set by MapView while it's flying the camera to a new group's bounds, so
+  // playback can hold the cursor still until the camera actually arrives —
+  // otherwise trees keep popping in (off-screen, at the destination) while
+  // the camera is still mid-flight from the old location.
+  const [cameraTransitioning, setCameraTransitioning] = useState(false);
 
   const speed = MAX_SPEED ** sliderPos;
 
@@ -38,6 +43,8 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
   const cursorRef = useRef(0);
   const speedRef = useRef(speed);
   speedRef.current = speed;
+  const cameraTransitioningRef = useRef(cameraTransitioning);
+  cameraTransitioningRef.current = cameraTransitioning;
 
   useEffect(() => {
     cursorRef.current = 0;
@@ -70,13 +77,15 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
       const dt = now - lastFrameRef.current;
       lastFrameRef.current = now;
 
-      const next = clamp(cursorRef.current + dt * speedRef.current);
-      cursorRef.current = next;
-      setCursorX(next);
+      if (!cameraTransitioningRef.current) {
+        const next = clamp(cursorRef.current + dt * speedRef.current);
+        cursorRef.current = next;
+        setCursorX(next);
 
-      if (next >= axis.maxX) {
-        setIsPlaying(false);
-        return;
+        if (next >= axis.maxX) {
+          setIsPlaying(false);
+          return;
+        }
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -226,5 +235,6 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
     setSliderPos,
     goToPrevGroup,
     goToNextGroup,
+    setCameraTransitioning,
   };
 }

@@ -81,6 +81,7 @@ function App() {
         onHoverTree={setHoveredId}
         onClickTree={handleClickTree}
         onViewportTreesChange={setViewportTreeIds}
+        onCameraTransitionChange={engine.setCameraTransitioning}
       />
 
       <div className={styles.vignette} />
