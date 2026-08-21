@@ -29,7 +29,7 @@ export function useTimelineEngine(trees: Tree[], options: UseTimelineEngineOptio
 
   const [cursorX, setCursorX] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [sliderPos, setSliderPos] = useState(0);
+  const [sliderPos, setSliderPos] = useState(0.6);
 
   const speed = MAX_SPEED ** sliderPos;
 
