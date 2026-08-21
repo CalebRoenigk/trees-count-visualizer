@@ -22,32 +22,27 @@
   border-radius: 999px;
 }
 
-.tick,
-.tickPassed {
+.groupBlock,
+.groupBlockActive {
   position: absolute;
   top: 50%;
-  width: 2px;
   height: 10px;
-  transform: translate(-50%, -50%);
-  border-radius: 1px;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: rgba(90, 82, 66, 0.18);
+  overflow: hidden;
   pointer-events: none;
 }
 
-.tick {
-  background: rgba(90, 82, 66, 0.35);
+.groupBlockActive {
+  outline: 1.5px solid var(--color-ink);
+  outline-offset: 1px;
 }
 
-.tickPassed {
+.groupBlockFill {
+  height: 100%;
   background: var(--color-ink-soft);
-}
-
-.activeBracket {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border: 1.5px solid var(--color-ink);
-  border-radius: 5px;
-  pointer-events: none;
+  border-radius: inherit;
 }
 
 .playhead {

@@ -1,26 +1,17 @@
 import { useCallback, useRef } from 'react';
 import type { TreeGroup } from '@/data/types';
 import type { TimelineAxis } from '@/data/scrubberLayout';
-import type { TimedTree } from '@/hooks/useTimelineEngine';
 import styles from './TimelineScrubber.module.css';
 
 interface TimelineScrubberProps {
   axis: TimelineAxis;
   groups: TreeGroup[];
-  timedTrees: TimedTree[];
   activeGroupIndex: number;
   cursorX: number;
   onSeek: (x: number) => void;
 }
 
-export function TimelineScrubber({
-  axis,
-  groups,
-  timedTrees,
-  activeGroupIndex,
-  cursorX,
-  onSeek,
-}: TimelineScrubberProps) {
+export function TimelineScrubber({ axis, groups, activeGroupIndex, cursorX, onSeek }: TimelineScrubberProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const draggingRef = useRef(false);
 
@@ -50,11 +41,6 @@ export function TimelineScrubber({
     draggingRef.current = false;
   };
 
-  const activeGroup = groups[activeGroupIndex];
-  const activeSegment = axis.segments.find(
-    (s) => s.kind === 'group' && s.groupIndex === activeGroupIndex,
-  );
-
   return (
     <div className={styles.wrapper}>
       <div
@@ -66,23 +52,27 @@ export function TimelineScrubber({
       >
         <div className={styles.baseline} />
 
-        {activeGroup && activeSegment && (
-          <div
-            className={styles.activeBracket}
-            style={{
-              left: `${pct(activeSegment.xStart)}%`,
-              width: `${Math.max(pct(activeSegment.xEnd) - pct(activeSegment.xStart), 0.6)}%`,
-            }}
-          />
-        )}
+        {groups.map((group, i) => {
+          const segment = axis.segments.find((s) => s.kind === 'group' && s.groupIndex === i);
+          if (!segment) return null;
 
-        {timedTrees.map((t) => (
-          <div
-            key={t.id}
-            className={t.x <= cursorX ? styles.tickPassed : styles.tick}
-            style={{ left: `${pct(t.x)}%` }}
-          />
-        ))}
+          const left = pct(segment.xStart);
+          const width = Math.max(pct(segment.xEnd) - pct(segment.xStart), 0.35);
+          const span = segment.xEnd - segment.xStart || 1;
+          const progress = Math.min(1, Math.max(0, (cursorX - segment.xStart) / span));
+          const isActive = i === activeGroupIndex;
+
+          return (
+            <div
+              key={group.id}
+              className={isActive ? styles.groupBlockActive : styles.groupBlock}
+              style={{ left: `${left}%`, width: `${width}%` }}
+              title={`${group.parkName} — ${group.treeIds.length} trees`}
+            >
+              <div className={styles.groupBlockFill} style={{ width: `${progress * 100}%` }} />
+            </div>
+          );
+        })}
 
         <div className={styles.playhead} style={{ left: `${pct(cursorX)}%` }} />
       </div>

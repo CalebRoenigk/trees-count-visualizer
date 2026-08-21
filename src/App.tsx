@@ -109,7 +109,6 @@ function App() {
           <TimelineScrubber
             axis={engine.axis}
             groups={engine.groups}
-            timedTrees={engine.timedTrees}
             activeGroupIndex={engine.activeGroupIndex}
             cursorX={engine.cursorX}
             onSeek={engine.seekTo}

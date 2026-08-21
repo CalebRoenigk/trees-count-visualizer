@@ -78,4 +78,5 @@ export interface TreeGroup {
   endTime: number;
   treeIds: string[];
   bounds: GroupBounds;
+  parkName: string;
 }
