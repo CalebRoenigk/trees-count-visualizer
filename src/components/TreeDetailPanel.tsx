@@ -1,3 +1,4 @@
+import { speciesDisplayName } from '@/data/colors';
 import type { Tree } from '@/data/types';
 import styles from './TreeDetailPanel.module.css';
 
@@ -11,7 +12,7 @@ export function TreeDetailPanel({ tree }: TreeDetailPanelProps) {
   return (
     <div className={styles.panel}>
       <div className={styles.title}>Tree {tree.sequenceNumber}</div>
-      <div className={styles.species}>{tree.species}</div>
+      <div className={styles.species}>{speciesDisplayName(tree.species)}</div>
       <dl className={styles.rows}>
         <div className={styles.row}>
           <dt>Trunk</dt>

@@ -1,4 +1,4 @@
-import { HEALTH_COLORS, HEALTH_ORDER, OTHER_SPECIES_COLOR, type SpeciesEntry } from '@/data/colors';
+import { HEALTH_COLORS, HEALTH_ORDER, OTHER_SPECIES_COLOR, speciesDisplayName, type SpeciesEntry } from '@/data/colors';
 import type { ColorMode } from './MapView';
 import styles from './Legend.module.css';
 
@@ -38,7 +38,7 @@ export function Legend({ mode, speciesEntries, hasOtherSpecies }: LegendProps) {
         {speciesEntries.map(({ species, color }) => (
           <li key={species}>
             <span className={styles.swatch} style={{ background: color }} />
-            {species}
+            {speciesDisplayName(species)}
           </li>
         ))}
         {hasOtherSpecies && (
