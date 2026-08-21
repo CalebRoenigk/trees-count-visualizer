@@ -10,7 +10,14 @@ interface LegendProps {
 
 export function Legend({ mode, speciesEntries, hasOtherSpecies }: LegendProps) {
   if (mode === 'health') {
-    const gradient = `linear-gradient(to right, ${HEALTH_ORDER.map((h) => HEALTH_COLORS[h]).join(', ')})`;
+    // Hard-edged segments (not a blended gradient) — each rating gets its
+    // own solid band, matching the discrete health buckets it represents.
+    const segmentPct = 100 / HEALTH_ORDER.length;
+    const stops = HEALTH_ORDER.flatMap((h, i) => {
+      const color = HEALTH_COLORS[h];
+      return [`${color} ${i * segmentPct}%`, `${color} ${(i + 1) * segmentPct}%`];
+    });
+    const gradient = `linear-gradient(to right, ${stops.join(', ')})`;
     return (
       <div className={styles.card}>
         <div className={styles.title}>Health Index</div>
