@@ -87,7 +87,7 @@ export function speciesEntriesFor(trees: Tree[], colorMap: SpeciesColorMap): {
 const MIN_CIRCUMFERENCE = 4;
 const MAX_CIRCUMFERENCE = 70;
 const MIN_RADIUS = 5;
-const MAX_RADIUS = 22;
+const MAX_RADIUS = 14;
 
 export function circumferenceToRadius(circumferenceIn: number): number {
   const t = Math.min(
