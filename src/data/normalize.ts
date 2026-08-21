@@ -89,6 +89,7 @@ export function normalizeTree(raw: RawSurveyTree): Tree | null {
 
   return {
     id: raw.TreeID ?? String(raw.OBJECTID),
+    sequenceNumber: 0, // assigned by loadTrees() once the full list is sorted
     lat,
     lon,
     createdAt,

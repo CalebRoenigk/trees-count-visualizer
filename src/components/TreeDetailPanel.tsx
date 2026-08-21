@@ -10,7 +10,7 @@ export function TreeDetailPanel({ tree }: TreeDetailPanelProps) {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.title}>Tree {tree.id}</div>
+      <div className={styles.title}>Tree {tree.sequenceNumber}</div>
       <div className={styles.species}>{tree.species}</div>
       <dl className={styles.rows}>
         <div className={styles.row}>

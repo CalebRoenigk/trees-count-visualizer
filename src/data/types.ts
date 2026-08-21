@@ -51,6 +51,8 @@ export type HealthRating = 'Dead' | 'Poor' | 'Fair' | 'Good' | 'Excellent';
 // Normalized shape the app actually renders/animates against.
 export interface Tree {
   id: string;
+  /** 1-based position in chronological (counted) order — "Tree N" in the UI. */
+  sequenceNumber: number;
   lat: number;
   lon: number;
   createdAt: Date;

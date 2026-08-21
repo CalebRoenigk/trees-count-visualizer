@@ -53,7 +53,11 @@ function App() {
     [treesInView, speciesColors],
   );
 
-  const selectedId = pinnedId ?? hoveredId;
+  // Falls back to whichever tree most recently popped in, so the panel
+  // is never blank once counting has started — hovering (or pinning by
+  // click) temporarily overrides that with a specific tree's info.
+  const latestVisibleId = engine.visibleTrees[engine.visibleTrees.length - 1]?.id ?? null;
+  const selectedId = pinnedId ?? hoveredId ?? latestVisibleId;
   const selectedTree = useMemo(
     () => (trees ?? []).find((t) => t.id === selectedId) ?? null,
     [trees, selectedId],

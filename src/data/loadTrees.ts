@@ -9,8 +9,14 @@ export async function loadTrees(): Promise<Tree[]> {
   }
   const raw: RawSurveyTree[] = await res.json();
 
-  return raw
+  const sorted = raw
     .map(normalizeTree)
     .filter((t): t is Tree => t !== null)
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  sorted.forEach((tree, i) => {
+    tree.sequenceNumber = i + 1;
+  });
+
+  return sorted;
 }
