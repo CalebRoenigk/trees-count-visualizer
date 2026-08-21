@@ -92,9 +92,13 @@ export function assignSpeciesColors(trees: Tree[]): SpeciesColorMap {
   // the legend — a given viewport's most-common trees are usually far down
   // the *global* frequency ranking, so capping this to the global top N
   // left most on-screen trees falling back to flat gray.
+  // "Unknown" is excluded here on purpose: it's not a real family, so it
+  // always falls through to the same flat OTHER_SPECIES_COLOR as "Other"
+  // instead of claiming a hue slot.
   const familyOrder: string[] = [];
   const membersByFamily = new Map<string, string[]>();
   for (const [species] of ranked) {
+    if (species === 'Unknown') continue;
     const family = familyOf(species);
     if (!membersByFamily.has(family)) {
       membersByFamily.set(family, []);
