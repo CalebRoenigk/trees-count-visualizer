@@ -58,6 +58,28 @@ export function speciesDisplayName(species: string): string {
   return i === -1 ? species : species.slice(i + 3);
 }
 
+/**
+ * Regroups a count-sorted (species, ...) list so members of the same
+ * family sit together — e.g. "Pin Oak" and "Scarlet Oak" end up adjacent
+ * instead of interleaved with unrelated species that happen to fall
+ * between them by raw count. A family's position is set by its
+ * first (best-ranked) member, so the grouping still reads roughly
+ * most-to-least common overall.
+ */
+function groupByFamily<T extends [string, ...unknown[]]>(rankedEntries: T[]): T[] {
+  const familyOrder: string[] = [];
+  const membersByFamily = new Map<string, T[]>();
+  for (const entry of rankedEntries) {
+    const family = familyOf(entry[0]);
+    if (!membersByFamily.has(family)) {
+      membersByFamily.set(family, []);
+      familyOrder.push(family);
+    }
+    membersByFamily.get(family)!.push(entry);
+  }
+  return familyOrder.flatMap((family) => membersByFamily.get(family)!);
+}
+
 export function assignSpeciesColors(trees: Tree[]): SpeciesColorMap {
   const counts = new Map<string, number>();
   for (const tree of trees) {
@@ -93,7 +115,10 @@ export function assignSpeciesColors(trees: Tree[]): SpeciesColorMap {
     });
   });
 
-  const top = ranked.slice(0, MAX_SPECIES_SHOWN);
+  // Shown (legend) entries are grouped by family too, so e.g. "Pin Oak"
+  // and "Scarlet Oak" sit together instead of being interleaved with
+  // unrelated species that happen to fall between them by raw count.
+  const top = groupByFamily(ranked.slice(0, MAX_SPECIES_SHOWN));
   return {
     colorFor: (species) => colorByName.get(species) ?? OTHER_SPECIES_COLOR,
     topSpecies: top.map(([species, count]) => ({
@@ -126,7 +151,7 @@ export function speciesEntriesFor(trees: Tree[], colorMap: SpeciesColorMap): {
   }
 
   const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  const top = ranked.slice(0, MAX_SPECIES_SHOWN);
+  const top = groupByFamily(ranked.slice(0, MAX_SPECIES_SHOWN));
 
   return {
     entries: top.map(([species, count]) => ({ species, count, color: colorMap.colorFor(species) })),
