@@ -82,6 +82,12 @@ export function deriveCircumference(raw: RawSurveyTree): number {
 }
 
 export function normalizeTree(raw: RawSurveyTree): Tree | null {
+  // These records were plotted by mistake — there's no real tree behind
+  // them at all, so they shouldn't be counted or drawn.
+  if (raw.TC25_TreePresence === 'Tree point added in error') {
+    return null;
+  }
+
   const lonLat = deriveLonLat(raw);
   if (!lonLat) {
     console.warn(`Dropping tree ${raw.TreeID ?? raw.OBJECTID}: no usable coordinates`);

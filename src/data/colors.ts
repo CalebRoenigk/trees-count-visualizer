@@ -12,6 +12,11 @@ export const HEALTH_COLORS: Record<HealthRating, string> = {
 
 export const HEALTH_ORDER: HealthRating[] = ['Dead', 'Poor', 'Fair', 'Good', 'Excellent'];
 
+// Trees marked "Cannot be Found" carry stale leftover health data from the
+// original staff-seeded record, not anything actually observed — shown as
+// this neutral color in health mode instead of a misleadingly real rating.
+export const UNVERIFIED_HEALTH_COLOR = '#8C8E82';
+
 const SPECIES_PALETTE = [
   '#8a9a5b',
   '#c98a4b',

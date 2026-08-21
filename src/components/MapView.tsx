@@ -1,6 +1,6 @@
 import * as maplibregl from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
-import { circumferenceToRadius, HEALTH_COLORS } from '@/data/colors';
+import { circumferenceToRadius, HEALTH_COLORS, UNVERIFIED_HEALTH_COLOR } from '@/data/colors';
 import type { SpeciesColorMap } from '@/data/colors';
 import type { GroupBounds, Tree } from '@/data/types';
 import mapStyleRaw from '@/map/style.json';
@@ -60,6 +60,12 @@ function buildFeatureCollection(
     type: 'FeatureCollection',
     features: trees.map((t) => {
       const visible = visibleIds.has(t.id);
+      // "Cannot be Found" trees carry stale, unverified health data left
+      // over from the original staff-seeded record — flagged with a
+      // neutral color in health mode rather than a misleading real rating.
+      const healthColor =
+        t.raw.TC25_TreePresenceReason === 'Cannot be Found' ? UNVERIFIED_HEALTH_COLOR : HEALTH_COLORS[t.health];
+      const typeColor = speciesColors.colorFor(t.species);
       return {
         type: 'Feature',
         id: t.id,
@@ -71,9 +77,9 @@ function buildFeatureCollection(
           radius: visible ? circumferenceToRadius(t.circumferenceIn) : 0,
           fillOpacity: visible ? 0.9 : 0,
           strokeOpacity: visible ? 1 : 0,
-          healthColor: HEALTH_COLORS[t.health],
-          typeColor: speciesColors.colorFor(t.species),
-          activeColor: colorMode === 'health' ? HEALTH_COLORS[t.health] : speciesColors.colorFor(t.species),
+          healthColor,
+          typeColor,
+          activeColor: colorMode === 'health' ? healthColor : typeColor,
           isNew: newlyPoppedIds.has(t.id) ? 1 : 0,
         },
       };
