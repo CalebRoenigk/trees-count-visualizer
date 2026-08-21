@@ -14,17 +14,10 @@ function isWgs84Range(lon: number, lat: number): boolean {
   return lon >= -180 && lon <= 180 && lat >= -90 && lat <= 90;
 }
 
-/**
- * Returns [lon, lat] in WGS84, preferring an already-geographic Shape
- * geometry over projecting XCoordinate/YCoordinate (EPSG:2263, NY State
- * Plane feet). Returns null if neither source is usable.
- */
+/** Returns [lon, lat] in WGS84, projected from XCoordinate/YCoordinate (NY
+ * State Plane feet, EPSG:2263). Returns null if coordinates are missing or
+ * don't project into a valid range. */
 export function deriveLonLat(raw: RawSurveyTree): [number, number] | null {
-  const shapeCoords = raw.Shape?.coordinates;
-  if (shapeCoords && isWgs84Range(shapeCoords[0], shapeCoords[1])) {
-    return [shapeCoords[0], shapeCoords[1]];
-  }
-
   if (typeof raw.XCoordinate === 'number' && typeof raw.YCoordinate === 'number') {
     const [lon, lat] = proj4('EPSG:2263', 'WGS84', [raw.XCoordinate, raw.YCoordinate]);
     if (isWgs84Range(lon, lat)) return [lon, lat];

@@ -7,22 +7,40 @@ const HEALTH_BUCKETS: Record<string, HealthRating> = {
   fair: 'Fair',
   good: 'Good',
   excellent: 'Excellent',
+  critical: 'Dead',
 };
 
+// TC25 field values as surveyed (not a rating scale by name, but each maps to
+// a rough severity 0-4 used only when Condition itself is missing/"Unknown").
 const ISSUE_SEVERITY: Record<string, number> = {
-  dead: 4,
-  'large dead': 4,
-  poor: 3,
-  'small dead': 2,
   'no issues': 0,
-  healthy: 0,
+  'full and healthy': 0,
+  'undetermined - seasonal l': 0,
+  'litter/bbq coal': 1,
+  'improper pruning': 1,
+  cavities: 2,
+  'damaged bark/wound': 2,
+  'insect holes': 2,
+  'sparse leaves': 2,
+  'yellowing or browning leaves': 2,
+  'insect damage': 2,
+  'small dead branches': 2,
+  mushrooms: 3,
+  'large dead branches': 3,
+  'dangling branches': 3,
 };
 
-// Prefer the surveyor's own overall determination; fall back to a worst-of
-// heuristic over the individual roots/trunk, branches, and leaves fields.
-// Likely needs a one-line tweak once real TC25_DetermineCondition strings are seen.
+// The real Condition field carries values like "Fair" or legacy-formatted
+// "4 - Fair" (a leftover numbered-category prefix from an older inventory).
+function stripConditionPrefix(value: string): string {
+  return value.replace(/^\d+\s*-\s*/, '').trim();
+}
+
+// Prefer the surveyor's own overall Condition rating; fall back to a
+// worst-of heuristic over the individual roots/trunk, branches, and leaves
+// fields when Condition is missing or "Unknown".
 export function deriveHealth(raw: RawSurveyTree): HealthRating {
-  const declared = raw.TC25_DetermineCondition?.trim().toLowerCase();
+  const declared = raw.Condition ? stripConditionPrefix(raw.Condition).toLowerCase() : '';
   if (declared && HEALTH_BUCKETS[declared]) return HEALTH_BUCKETS[declared];
 
   const statuses = [
@@ -49,9 +67,7 @@ export function deriveCircumference(raw: RawSurveyTree): number {
   if ((raw.TC25_TrunkCount ?? 0) > 1 && raw.TC25_MultistemDBH) {
     return raw.TC25_MultistemDBH;
   }
-  return (
-    raw.TC25_Circumference_Trunk1 ?? raw.ExistingCircumference ?? 8
-  );
+  return raw.TC25_Circumference_Trunk1 ?? raw.ExistingCircumference ?? 8;
 }
 
 export function normalizeTree(raw: RawSurveyTree): Tree | null {
@@ -61,9 +77,11 @@ export function normalizeTree(raw: RawSurveyTree): Tree | null {
     return null;
   }
 
-  const createdAt = new Date(raw.CreationDate);
+  // EditDate is when the survey was actually done — CreationDate mostly
+  // reflects when the (often staff-pre-seeded) record was first created.
+  const createdAt = new Date(raw.EditDate);
   if (Number.isNaN(createdAt.getTime())) {
-    console.warn(`Dropping tree ${raw.TreeID ?? raw.OBJECTID}: invalid CreationDate`);
+    console.warn(`Dropping tree ${raw.TreeID ?? raw.OBJECTID}: invalid EditDate`);
     return null;
   }
 
@@ -74,7 +92,6 @@ export function normalizeTree(raw: RawSurveyTree): Tree | null {
     lat,
     lon,
     createdAt,
-    creator: raw.Creator,
     species: raw.Species?.trim() || raw.TC25_SpeciesUnlisted?.trim() || 'Unknown',
     circumferenceIn: deriveCircumference(raw),
     health: deriveHealth(raw),

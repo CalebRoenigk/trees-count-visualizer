@@ -1,4 +1,4 @@
-import { DATA_URL, isCalebRecord } from './config';
+import { DATA_URL } from './config';
 import { normalizeTree } from './normalize';
 import type { RawSurveyTree, Tree } from './types';
 
@@ -10,7 +10,6 @@ export async function loadTrees(): Promise<Tree[]> {
   const raw: RawSurveyTree[] = await res.json();
 
   return raw
-    .filter(isCalebRecord)
     .map(normalizeTree)
     .filter((t): t is Tree => t !== null)
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());

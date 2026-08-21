@@ -1,24 +1,21 @@
-// Mirrors the NYC Parks TreesCount 2025 "SurveyTrees" export field-for-field.
+// Mirrors the NYC Parks TreesCount 2025 "SurveyTrees" export field-for-field
+// (Creator/Editor/GlobalID/RIGlobalID/PlantingSpaceGlobalID/CommunityBoard are
+// stripped at conversion time — this repo and its published site are public,
+// and those fields carry surveyor identifiers).
 export interface RawSurveyTree {
   OBJECTID: number;
-  Shape?: { type: 'Point'; coordinates: [number, number] } | null;
-  Join_Count?: number | null;
-  TARGET_FID?: number | null;
+  TreeID: string;
+  PlantingSpaceID?: string | null;
   Structure?: string | null;
   Condition?: string | null;
   ExistingCircumference?: number | null;
-  PlantingSpaceID?: string | null;
-  TreeID: string;
   Species?: string | null;
   StumpDiameter?: number | null;
   BoroughName?: string | null;
-  CommunityBoard?: string | null;
   ParkName?: string | null;
   XCoordinate?: number | null;
   YCoordinate?: number | null;
   TreeGlobalID?: string | null;
-  PlantingSpaceGlobalID?: string | null;
-  RIGlobalID?: string | null;
   TC25_TreePresence?: string | null;
   TC25_TreePresenceReason?: string | null;
   TC25_TreeStatus?: string | null;
@@ -43,14 +40,10 @@ export interface RawSurveyTree {
   TC25_TreeHealth_Leaves1?: string | null;
   TC25_TreeHealth_Leaves2?: string | null;
   TC25_ZoneID?: string | null;
+  TC25_SubCategory?: string | null;
+  TC25_TypeCategory?: string | null;
   CreationDate: string;
-  Creator: string;
-  TC_SubCategory?: string | null;
-  TC_TypeCategory?: string | null;
-  EditDate?: string | null;
-  Editor?: string | null;
-  SubCategory?: string | null;
-  TypeCategory?: string | null;
+  EditDate: string;
 }
 
 export type HealthRating = 'Dead' | 'Poor' | 'Fair' | 'Good' | 'Excellent';
@@ -61,7 +54,6 @@ export interface Tree {
   lat: number;
   lon: number;
   createdAt: Date;
-  creator: string;
   species: string;
   circumferenceIn: number;
   health: HealthRating;
