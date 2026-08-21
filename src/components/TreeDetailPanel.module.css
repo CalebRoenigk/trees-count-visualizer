@@ -2,17 +2,19 @@
   pointer-events: auto;
   text-align: right;
   color: var(--color-ink-soft);
-  font-size: 0.72rem;
+  /* Flat at the mobile end below ~360px, flat at the desktop size above
+     ~600px — "much smaller" on phones without shrinking the common case. */
+  font-size: clamp(0.56rem, 2.2vw, 0.72rem);
   line-height: 1.55;
   letter-spacing: 0.02em;
-  max-width: 220px;
+  max-width: min(220px, 42vw);
 }
 
 .title {
   font-family: var(--font-ui);
   font-weight: 600;
   color: var(--color-ink);
-  font-size: 0.8rem;
+  font-size: clamp(0.64rem, 2.6vw, 0.8rem);
 }
 
 .species {
