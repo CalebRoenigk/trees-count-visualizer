@@ -1,4 +1,5 @@
 import { deriveLonLat } from './coords';
+import { SPECIES_NAME_FIXES } from './speciesNameFixes';
 import type { HealthRating, RawSurveyTree, Tree } from './types';
 
 const HEALTH_BUCKETS: Record<string, HealthRating> = {
@@ -63,6 +64,16 @@ export function deriveHealth(raw: RawSurveyTree): HealthRating {
   return 'Good';
 }
 
+// Cleans up known raw-data quirks: legacy "<code> - <scientific> - <common>"
+// entries left over from an older inventory system, cultivar-quoted names
+// ("Bloodgood' London Planetree"), and casing bugs ("Shumard'S Oak"). See
+// speciesNameFixes.ts for how that table was derived.
+function deriveSpecies(raw: RawSurveyTree): string {
+  const declared = raw.Species?.trim() || raw.TC25_SpeciesUnlisted?.trim();
+  if (!declared) return 'Unknown';
+  return SPECIES_NAME_FIXES[declared] ?? declared;
+}
+
 export function deriveCircumference(raw: RawSurveyTree): number {
   if ((raw.TC25_TrunkCount ?? 0) > 1 && raw.TC25_MultistemDBH) {
     return raw.TC25_MultistemDBH;
@@ -93,7 +104,7 @@ export function normalizeTree(raw: RawSurveyTree): Tree | null {
     lat,
     lon,
     createdAt,
-    species: raw.Species?.trim() || raw.TC25_SpeciesUnlisted?.trim() || 'Unknown',
+    species: deriveSpecies(raw),
     circumferenceIn: deriveCircumference(raw),
     health: deriveHealth(raw),
     trunkStatus: raw.TC25_TreeHealth_RootsTrunk1 ?? 'Unknown',
