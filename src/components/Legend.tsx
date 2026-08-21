@@ -23,9 +23,9 @@ export function Legend({ mode, speciesEntries, hasOtherSpecies }: LegendProps) {
         <div className={styles.title}>Health Index</div>
         <div className={styles.gradient} style={{ background: gradient }} />
         <div className={styles.labels}>
-          <span>Dead</span>
-          <span>Poor</span>
-          <span>Excellent</span>
+          <span style={{ left: 0 }}>Dead</span>
+          <span style={{ left: `${HEALTH_ORDER.indexOf('Poor') * segmentPct}%` }}>Poor</span>
+          <span className={styles.labelLast}>Excellent</span>
         </div>
       </div>
     );

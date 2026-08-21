@@ -23,11 +23,21 @@
 }
 
 .labels {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  height: 1.2em;
   margin-top: 0.4em;
   font-size: 0.65rem;
   color: var(--color-ink-faint);
+}
+
+.labels span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+.labelLast {
+  right: 0;
 }
 
 .speciesList {
